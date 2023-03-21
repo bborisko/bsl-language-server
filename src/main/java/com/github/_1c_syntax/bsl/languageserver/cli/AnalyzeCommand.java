@@ -37,6 +37,7 @@ import me.tongfei.progressbar.ProgressBar;
 import me.tongfei.progressbar.ProgressBarBuilder;
 import me.tongfei.progressbar.ProgressBarStyle;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.eclipse.lsp4j.Diagnostic;
 import org.springframework.stereotype.Component;
 import picocli.CommandLine.Command;
@@ -139,6 +140,11 @@ public class AnalyzeCommand implements Callable<Integer> {
     description = "Silent mode")
   private boolean silentMode;
 
+  @Option(
+    names = {"-m", "--makets"},
+    description = "Add tamplates Diagnostic")
+  private boolean TamplatesDiag;
+
   private final ReportersAggregator aggregator;
   private final LanguageServerConfiguration configuration;
   private final ServerContext context;
@@ -165,7 +171,13 @@ public class AnalyzeCommand implements Callable<Integer> {
     var configurationPath = LanguageServerConfiguration.getCustomConfigurationRoot(configuration, srcDir);
     context.setConfigurationRoot(configurationPath);
 
-    var files = (List<File>) FileUtils.listFiles(srcDir.toFile(), new String[]{"bsl", "os"}, true);
+
+    var str = new String[]{"bsl", "os"};
+    if (TamplatesDiag) {
+      str = new String[]{"bsl", "os", "txt"};
+    }
+
+    var files = (List<File>) FileUtils.listFiles(srcDir.toFile(), str, true);
 
     context.populateContext(files);
 
@@ -205,7 +217,27 @@ public class AnalyzeCommand implements Callable<Integer> {
     context.rebuildDocument(documentContext);
 
     var filePath = srcDir.relativize(Absolute.path(file));
+
+    String fileExtension = FilenameUtils.getExtension(file.getAbsolutePath());
+    String fileNameWithOutExt = FilenameUtils.removeExtension(file.getAbsolutePath());
+    if (fileExtension.equals("txt") && !file.getName().equals("Template.txt"))
+    {
+      return new FileInfo(filePath, "", new ArrayList<>(), new MetricStorage());
+    }
+
     List<Diagnostic> diagnostics = documentContext.getDiagnostics();
+
+    if (file.getName().equals("Template.txt"))
+    {
+      for (Diagnostic strDiag : diagnostics
+      ) {
+        if (strDiag.getCode().getLeft().equals("ParseError")){
+          diagnostics.remove(strDiag);
+          break;
+        }
+      }
+    }
+
     MetricStorage metrics = documentContext.getMetrics();
     var mdoRef = documentContext.getMdObject()
       .map(AbstractMDObjectBase::getMdoReference)
