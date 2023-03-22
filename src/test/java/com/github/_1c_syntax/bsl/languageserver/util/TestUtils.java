@@ -24,6 +24,7 @@ package com.github._1c_syntax.bsl.languageserver.util;
 import com.github._1c_syntax.bsl.languageserver.context.DocumentContext;
 import com.github._1c_syntax.bsl.languageserver.context.ServerContext;
 import com.github._1c_syntax.utils.Absolute;
+import com.github._1c_syntax.utils.CaseInsensitivePattern;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
@@ -32,14 +33,20 @@ import java.io.File;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.regex.Pattern;
 
 public class TestUtils {
 
   public static final URI FAKE_DOCUMENT_URI = Absolute.uri("file:///fake-uri.bsl");
   public static final String PATH_TO_METADATA = "src/test/resources/metadata/designer";
 
+  private static final Pattern checkFilePath = CaseInsensitivePattern.compile(
+    "^([.][/]src[/]).*"
+  );
   @SneakyThrows
   public static DocumentContext getDocumentContextFromFile(String filePath) {
+    var matcher  = checkFilePath.matcher(filePath);
+    if (!matcher.matches()) { throw new Error("Контроль путей. Для класса TestUtils разрешён только корневой каталог './src/'"); }
 
     String fileContent = FileUtils.readFileToString(
       new File(filePath),

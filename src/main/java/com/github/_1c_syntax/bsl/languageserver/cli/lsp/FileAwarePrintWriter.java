@@ -22,6 +22,7 @@
 package com.github._1c_syntax.bsl.languageserver.cli.lsp;
 
 import com.github._1c_syntax.bsl.languageserver.configuration.events.LanguageServerConfigurationChangedEvent;
+import com.github._1c_syntax.utils.CaseInsensitivePattern;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 /**
  * Обертка над PrintWriter, позволяющая изменять выходной файловый поток "на-лету",
@@ -80,6 +82,12 @@ public class FileAwarePrintWriter extends PrintWriter {
     FileOutputStream fileOutputStream;
     try {
       // stream is not closed, cause it used as output stream in writer. See this#out field.
+      if (externalFileName.matcher(file.getAbsolutePath()).results().count() > 1)
+      {
+        LOGGER.error("Контроль вхождений '../'. Разрешен 1 вход.");
+        return;
+      }
+
       fileOutputStream = new FileOutputStream(file);
     } catch (FileNotFoundException e) {
       LOGGER.error("Can't create LSP trace file", e);
@@ -94,6 +102,9 @@ public class FileAwarePrintWriter extends PrintWriter {
 
   }
 
+  private static final Pattern externalFileName= CaseInsensitivePattern.compile(
+    "([.][.][/])"
+  );
   @Override
   public void print(String s) {
     if (isEmpty) {

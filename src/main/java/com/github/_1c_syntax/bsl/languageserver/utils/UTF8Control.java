@@ -21,6 +21,8 @@
  */
 package com.github._1c_syntax.bsl.languageserver.utils;
 
+import com.github._1c_syntax.utils.CaseInsensitivePattern;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -30,11 +32,22 @@ import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
+import java.util.regex.Pattern;
 
 public class UTF8Control extends ResourceBundle.Control {
+
+  private static final Pattern externalFileName= CaseInsensitivePattern.compile(
+    "([.][.][/])"
+  );
+
   @Override
   public ResourceBundle newBundle
     (String baseName, Locale locale, String format, ClassLoader loader, boolean reload) throws IOException {
+
+    if (externalFileName.matcher(baseName).results().count() > 1)
+    {
+      throw new Error("Контроль вхождений '../'. Разрешен 1 вход.");
+    }
     // The below is a copy of the default implementation.
     String bundleName = toBundleName(baseName, locale);
     String resourceName = toResourceName(bundleName, "properties");

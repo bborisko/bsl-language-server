@@ -30,6 +30,7 @@ import com.github._1c_syntax.bsl.languageserver.reporters.data.FileInfo;
 import com.github._1c_syntax.bsl.types.MdoReference;
 import com.github._1c_syntax.mdclasses.mdo.AbstractMDObjectBase;
 import com.github._1c_syntax.utils.Absolute;
+import com.github._1c_syntax.utils.CaseInsensitivePattern;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +49,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static picocli.CommandLine.Option;
@@ -148,6 +151,7 @@ public class AnalyzeCommand implements Callable<Integer> {
   private final ReportersAggregator aggregator;
   private final LanguageServerConfiguration configuration;
   private final ServerContext context;
+  private static final Pattern externalFileName = CaseInsensitivePattern.compile("([.][.][/])");
 
   public Integer call() {
 
@@ -171,6 +175,16 @@ public class AnalyzeCommand implements Callable<Integer> {
     var configurationPath = LanguageServerConfiguration.getCustomConfigurationRoot(configuration, srcDir);
     context.setConfigurationRoot(configurationPath);
 
+    Matcher matcher = externalFileName.matcher(this.srcDirOption);
+
+    int resultMatch;
+    for(resultMatch = 0; matcher.find(); ++resultMatch) {
+    }
+
+    if (resultMatch > 1) {
+      LOGGER.error("Контроль вхождений '../'. Разрешен 1 вход.");
+      return 1;
+    }
 
     var str = new String[]{"bsl", "os"};
     if (TamplatesDiag) {
