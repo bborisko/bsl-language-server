@@ -27,6 +27,10 @@ import com.github._1c_syntax.bsl.languageserver.context.MetricStorage;
 import com.github._1c_syntax.mdclasses.mdo.AbstractMDObjectBase;
 import com.github._1c_syntax.utils.Absolute;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.Value;
 import org.eclipse.lsp4j.Diagnostic;
 
@@ -34,16 +38,27 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-
+// Denis Begin
+//@Value
+@Getter
+@Setter
+@ToString
+@EqualsAndHashCode
+// Denis End
 @Value
-@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FileInfo {
   Path path;
   String mdoRef;
   List<Diagnostic> diagnostics;
   MetricStorage metrics;
+
+  // Denis Begin
+  //Map<String, Object> diagnosticsHash;
+  //Object diagnosticsHash = new Object();
+  // Denis End
 
   public FileInfo(String sourceDir, DocumentContext documentContext, List<Diagnostic> diagnostics) {
     URI uri = documentContext.getUri();
@@ -57,4 +72,13 @@ public class FileInfo {
       mdoRef = "";
     }
   }
+
+  // Denis Begin
+  public FileInfo(Path path, String mdoRef, List<Diagnostic> diagnostics, MetricStorage metrics) {
+    this.path = path;
+    this.mdoRef = mdoRef;
+    this.diagnostics = diagnostics;
+    this.metrics = metrics;
+  }
+  // Denis End
 }
